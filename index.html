@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Artistry — Creative Control Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #09090b;
+            --bg-secondary: #18181b;
+            --bg-tertiary: #27272a;
+            --bg-hover: #3f3f46;
+            --border: #3f3f46;
+            --border-light: #52525b;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #a855f7;
+            --accent-hover: #c084fc;
+            --accent-muted: rgba(168, 85, 247, 0.15);
+            --accent-secondary: #ec4899;
+            --success: #10b981;
+            --success-muted: rgba(16, 185, 129, 0.15);
+            --warning: #f59e0b;
+            --warning-muted: rgba(245, 158, 11, 0.15);
+            --error: #ef4444;
+            --gradient-1: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #f97316 100%);
+            --gradient-2: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-glow {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 70%, rgba(236, 72, 153, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Header */
+        .header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(12px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .logo span {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            font-family: inherit;
+            letter-spacing: -0.01em;
+        }
+
+        .btn-ghost {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-light);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--gradient-2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Main Layout */
+        .main {
+            position: relative;
+            z-index: 10;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            height: calc(100vh - 69px);
+        }
+
+        /* Left Panel - Input */
+        .input-panel {
+            background: rgba(24, 24, 27, 0.6);
+            backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .panel-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .input-content {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Input Methods */
+        .input-tabs {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-tertiary);
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .input-tab {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+        }
+
+        .input-tab.active {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .input-tab:hover:not(.active) {
+            color: var(--text-secondary);
+        }
+
+        /* Text Input */
+        .text-input-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .textarea-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+            padding: 18px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            line-height: 1.7;
+            resize: none;
+            transition: all 0.2s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-muted);
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Platform selector */
+        .platform-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .platform-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .platform-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .platform-option {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
+            color: var(--text-muted);
+            border: 2px solid var(--border);
+            text-align: center;
+        }
+
+        .platform-option.active {
+            background: var(--accent-muted);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .platform-option:hover:not(.active) {
+            border-color: var(--border-light);
+            color: var(--text-secondary);
+        }
+
+        /* File Upload */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 14px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: var(--accent-muted);
+        }
+
+        .upload-zone.dragging {
+            border-color: var(--accent);
+            background: var(--accent-muted);
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 20px;
+            background: var(--gradient-2);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .upload-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .upload-hint {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+
+        .file-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--accent-muted);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .file-remove {
+            padding: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .file-remove:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        /* Generate Button */
+        .generate-section {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-generate {
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 14px;
+            letter-spacing: -0.01em;
+        }
+
+        .btn-generate .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Fun phrases */
+        .fun-phrase {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 12px;
+            font-style: italic;
+        }
+
+        /* Right Panel - Output */
+        .output-panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: rgba(9, 9, 11, 0.5);
+        }
+
+        .output-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(24, 24, 27, 0.6);
+            backdrop-filter: blur(12px);
+        }
+
+        .output-title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .output-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .shot-count {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            padding: 6px 12px;
+            background: var(--accent-muted);
+            border-radius: 20px;
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 100px;
+            height: 100px;
+            background: var(--gradient-2);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .empty-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .empty-text {
+            font-size: 15px;
+            color: var(--text-muted);
+            max-width: 400px;
+            line-height: 1.7;
+        }
+
+        /* Shots List */
+        .shots-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px;
+        }
+
+        .shot-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .shot-card:hover {
+            border-color: var(--border-light);
+        }
+
+        .shot-card.expanded {
+            border-color: var(--accent);
+            box-shadow: 0 4px 24px rgba(168, 85, 247, 0.15);
+        }
+
+        .shot-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .shot-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .shot-title-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .shot-number {
+            width: 32px;
+            height: 32px;
+            background: var(--gradient-2);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+        }
+
+        .shot-name {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .shot-duration {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-left: 8px;
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+
+        .shot-toggle {
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .shot-header:hover .shot-toggle {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .shot-card.expanded .shot-toggle {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .shot-content {
+            display: none;
+            padding: 0 22px 22px;
+        }
+
+        .shot-card.expanded .shot-content {
+            display: block;
+        }
+
+        /* Prompt Sections */
+        .prompt-section {
+            margin-bottom: 20px;
+        }
+
+        .prompt-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .prompt-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .prompt-label-text {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+        }
+
+        .prompt-label-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prompt-label-tag {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .char-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .char-count.warning {
+            color: var(--warning);
+        }
+
+        .char-count.error {
+            color: var(--error);
+        }
+
+        .tag-image {
+            background: var(--success-muted);
+            color: var(--success);
+        }
+
+        .tag-motion {
+            background: var(--warning-muted);
+            color: var(--warning);
+        }
+
+        .prompt-box {
+            position: relative;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 18px;
+            padding-right: 80px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            color: var(--text-primary);
+            min-height: 120px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            transition: all 0.2s ease;
+        }
+
+        .prompt-box:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-muted);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 8px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .copy-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+
+        .copy-btn.copied {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        /* Feedback Section */
+        .feedback-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .feedback-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feedback-label::before {
+            content: '✨';
+        }
+
+        .feedback-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .feedback-input {
+            flex: 1;
+            padding: 14px 18px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .feedback-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-muted);
+        }
+
+        .feedback-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn-refine {
+            padding: 14px 20px;
+            white-space: nowrap;
+            border-radius: 12px;
+        }
+
+        .btn-refine .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        /* Project Summary */
+        .project-summary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-summary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+        }
+
+        .summary-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+
+        .summary-meta {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 18px;
+        }
+
+        .summary-narrative {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            padding: 16px 18px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .summary-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+
+        .tone-tag {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            background: var(--accent-muted);
+            color: var(--accent);
+            border-radius: 20px;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            transform: translateY(120px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.success::before {
+            content: '✓';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* Hidden file input */
+        #file-input {
+            display: none;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                    <polyline points="2 17 12 22 22 17"></polyline>
+                    <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+            </div>
+            <span>AI Artistry</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-ghost" id="share-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+                Share
+            </button>
+            <button class="btn btn-ghost" id="export-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Export
+            </button>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Left Panel: Input -->
+        <aside class="input-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">What's your vision?</h2>
+                <p class="panel-subtitle">Describe your concept or drop a deck</p>
+            </div>
+
+            <div class="input-content">
+                <div class="input-tabs">
+                    <button class="input-tab active" data-tab="text">✍️ Describe</button>
+                    <button class="input-tab" data-tab="upload">📎 Upload</button>
+                </div>
+
+                <!-- Text Input -->
+                <div class="text-input-area" id="text-input-section">
+                    <div class="textarea-wrapper">
+                        <textarea id="creative-input" placeholder="Tell me about your spot...
+
+Example: A :15 for Poland Spring. An empty pint glass slides across an Irish pub bartop on St. Paddy's Day, weaving around decorations until it reaches a Poland Spring bottle.
+
+It's whimsical and slightly absurd. The glass has 'desire' — it knows exactly where it's going."></textarea>
+                    </div>
+                </div>
+
+                <!-- Upload Section (hidden by default) -->
+                <div class="upload-section" id="upload-section" style="display: none;">
+                    <div class="upload-zone" id="upload-zone">
+                        <div class="upload-icon">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p class="upload-text">Drop your deck here</p>
+                        <p class="upload-hint">.pptx, .pdf, or .key</p>
+                    </div>
+                    <input type="file" id="file-input" accept=".pptx,.pdf,.key">
+                    <div id="uploaded-files"></div>
+                </div>
+
+                <!-- Platform selector -->
+                <div class="platform-selector">
+                    <span class="platform-label">Target Platform</span>
+                    <div class="platform-options">
+                        <button class="platform-option active" data-platform="runway" data-limit="1500">Runway</button>
+                        <button class="platform-option" data-platform="firefly" data-limit="2000">Firefly</button>
+                        <button class="platform-option" data-platform="veo" data-limit="1800">Veo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="generate-section">
+                <button class="btn btn-primary btn-generate" id="generate-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <path d="M2 17l10 5 10-5"></path>
+                        <path d="M2 12l10 5 10-5"></path>
+                    </svg>
+                    Generate Control Prompts
+                </button>
+                <p class="fun-phrase" id="fun-phrase">Transform ideas into AI-ready precision ✨</p>
+            </div>
+        </aside>
+
+        <!-- Right Panel: Output -->
+        <section class="output-panel">
+            <!-- Empty State -->
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </div>
+                <h3 class="empty-title">Ready when you are</h3>
+                <p class="empty-text">Describe your creative vision and I'll generate precise control prompts that actually work with generative AI tools.</p>
+            </div>
+
+            <!-- Output Content (hidden initially) -->
+            <div id="output-content" style="display: none;">
+                <div class="output-header">
+                    <div class="output-title-group">
+                        <h2 class="output-title" id="project-title">Project Title</h2>
+                        <span class="shot-count" id="shot-count">0 shots</span>
+                    </div>
+                    <div class="output-actions">
+                        <button class="btn btn-ghost" id="expand-all">Expand All</button>
+                    </div>
+                </div>
+
+                <div class="shots-container" id="shots-container">
+                    <!-- Project Summary -->
+                    <div class="project-summary" id="project-summary">
+                        <h3 class="summary-title" id="summary-title">Project Title</h3>
+                        <p class="summary-meta" id="summary-meta">:15 • Digital/CTV</p>
+                        <div class="summary-narrative" id="summary-narrative">
+                            Narrative summary will appear here...
+                        </div>
+                        <div class="summary-tags" id="summary-tags"></div>
+                    </div>
+
+                    <!-- Shots will be inserted here -->
+                    <div id="shots-list"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+        // Import reasoning engine (when using build system)
+        // import { generateArchitecture, refineArchitecture, REASONING_ENGINE_SYSTEM_PROMPT } from './reasoning-engine.js';
+
+        // =====================================================================
+        // REASONING ENGINE SYSTEM PROMPT (embedded for standalone use)
+        // =====================================================================
+        const REASONING_ENGINE_SYSTEM_PROMPT = `You are AI Artistry's Creative Director Engine—a system that translates creative vision into technically precise generative AI prompts.
+
+## Your Role
+
+You function like the world's best creative director taking a brief handoff. You understand:
+- What the creative MEANS, not just what they SAY
+- Film grammar and visual storytelling conventions
+- How generative AI tools interpret prompts
+- What makes visuals feel cohesive across a sequence
+
+Your job is to AMPLIFY creative intent, not flatten it. A vague, evocative brief should become a specific, evocative prompt—not a generic one.
+
+## Core Operating Principles
+
+### 1. Interpret Before You Ask
+When given a creative brief, attempt to produce complete output first. Only ask clarifying questions if your confidence that the output matches intent falls below 70%.
+
+### 2. Show Your Work
+When you make interpretive decisions, surface them explicitly in the interpretations array with:
+- What was underspecified
+- How you interpreted it
+- Why you chose that interpretation
+- Confidence level (0-1)
+
+### 3. Narrative Coherence Over Visual Accuracy
+You are building a STORY, not disconnected images. Every shot must serve a narrative purpose and connect to adjacent shots.
+
+### 4. Technical Specificity
+Transform vague descriptors into technical parameters:
+- "cinematic" → "anamorphic lens flare, 2.39:1 aspect ratio, shallow depth of field at f/2.8"
+- "professional" → "commercial photography, diffused key light, fill ratio 2:1, no harsh shadows"
+- "energetic" → "dynamic camera movement, dutch angle, high contrast, saturated colors"
+- "moody" → "low-key lighting, lifted blacks, desaturated except accent colors"
+
+### 5. Film Grammar Foundation
+Apply cinematic conventions automatically based on narrative beats.
+
+## Output Format
+
+You MUST output valid JSON matching this structure:
+{
+  "metadata": {
+    "schema_version": "1.0.0",
+    "confidence_score": 0.0-1.0,
+    "created_at": "ISO datetime"
+  },
+  "project": {
+    "title": "string",
+    "brand": "string or null",
+    "duration": "string like :15 or :30",
+    "narrative_summary": "string",
+    "emotional_arc": "string",
+    "tone": ["array", "of", "tones"]
+  },
+  "global_style": {
+    "visual_approach": "string",
+    "color_palette": { "primary": "", "temperature": "warm|neutral|cool" },
+    "lighting": { "style": "", "contrast": "low|medium|high" },
+    "quality_markers": ["array"],
+    "negative_prompts": ["array"]
+  },
+  "shots": [
+    {
+      "shot_number": 1,
+      "shot_id": "descriptive_id",
+      "narrative_beat": "what this shot accomplishes",
+      "duration_estimate": "2-3s",
+      "shot_type": "wide|medium|close-up|etc",
+      "camera_movement": "static|pan|tracking|etc",
+      "prompt": {
+        "full_prompt": "COMPLETE copy/paste ready image prompt with ALL details",
+        "motion_prompt": "COMPLETE copy/paste ready motion/video prompt",
+        "negative_prompt": "what to avoid"
+      }
+    }
+  ],
+  "interpretations": [
+    {
+      "element": "what was interpreted",
+      "interpretation": "how you interpreted it",
+      "reasoning": "why",
+      "confidence": 0.0-1.0,
+      "alternatives": ["other", "options"]
+    }
+  ],
+  "missing_info": [
+    {
+      "question": "what would help",
+      "why_it_matters": "context",
+      "default_used": "what you assumed"
+    }
+  ]
+}
+
+## Character Consistency Protocol
+
+For any character or object appearing in multiple shots:
+1. Lock core attributes in EVERY shot prompt
+2. Repeat full description verbatim in each shot
+3. Never rely on "same as before" references
+
+Output valid JSON only. No markdown code blocks, no explanation outside the JSON.`;
+
+        // =====================================================================
+        // API CONFIGURATION
+        // =====================================================================
+
+        // Set your API endpoint here (backend proxy recommended for security)
+        const API_ENDPOINT = '/api/generate'; // Your backend endpoint
+        // For development/demo, you can use a direct endpoint with CORS proxy
+
+        // Platform character limits
+        let currentPlatformLimit = 1500;
+        let projectData = null;
+
+        const funPhrases = [
+            "Transform ideas into AI-ready precision ✨",
+            "Where creative vision meets technical control 🎯",
+            "Because 'make it cool' isn't a prompt 😅",
+            "Speak creative, output control language 🔮",
+            "Your shortcut to AI that actually listens 🎬"
+        ];
+
+        // Rotate fun phrases
+        setInterval(() => {
+            const el = document.getElementById('fun-phrase');
+            el.style.opacity = 0;
+            setTimeout(() => {
+                el.textContent = funPhrases[Math.floor(Math.random() * funPhrases.length)];
+                el.style.opacity = 1;
+            }, 200);
+        }, 5000);
+
+        // Platform switching
+        const platformOptions = document.querySelectorAll('.platform-option');
+        platformOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                platformOptions.forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                currentPlatformLimit = parseInt(opt.dataset.limit);
+                updateAllCharCounts();
+            });
+        });
+
+        function updateAllCharCounts() {
+            document.querySelectorAll('.prompt-box').forEach(box => {
+                updateCharCount(box);
+            });
+        }
+
+        function updateCharCount(box) {
+            const text = box.innerText.replace('Copy', '').replace('Copied!', '').trim();
+            const count = text.length;
+            const section = box.closest('.prompt-section');
+            if (!section) return;
+            const countEl = section.querySelector('.char-count');
+            if (countEl) {
+                countEl.textContent = `${count} / ${currentPlatformLimit}`;
+                countEl.classList.remove('warning', 'error');
+                if (count > currentPlatformLimit) {
+                    countEl.classList.add('error');
+                } else if (count > currentPlatformLimit * 0.9) {
+                    countEl.classList.add('warning');
+                }
+            }
+        }
+
+        // Toast helper
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Tab switching
+        const tabs = document.querySelectorAll('.input-tab');
+        const textSection = document.getElementById('text-input-section');
+        const uploadSection = document.getElementById('upload-section');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                if (tab.dataset.tab === 'text') {
+                    textSection.style.display = 'flex';
+                    uploadSection.style.display = 'none';
+                } else {
+                    textSection.style.display = 'none';
+                    uploadSection.style.display = 'block';
+                }
+            });
+        });
+
+        // File upload handling
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadedFiles = document.getElementById('uploaded-files');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragging');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragging');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragging');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            uploadedFiles.innerHTML = '';
+            Array.from(files).forEach(file => {
+                const fileEl = document.createElement('div');
+                fileEl.className = 'uploaded-file';
+                fileEl.innerHTML = `
+                    <div class="file-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${(file.size / 1024).toFixed(1)} KB</div>
+                    </div>
+                    <button class="file-remove" onclick="this.parentElement.remove()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                `;
+                uploadedFiles.appendChild(fileEl);
+            });
+        }
+
+        // Generate button
+        const generateBtn = document.getElementById('generate-btn');
+        const emptyState = document.getElementById('empty-state');
+        const outputContent = document.getElementById('output-content');
+
+        generateBtn.addEventListener('click', async () => {
+            const input = document.getElementById('creative-input').value;
+            if (!input.trim()) {
+                showToast('Drop some creative vision first!');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<div class="spinner"></div> Generating...';
+
+            const platform = document.querySelector('.platform-option.active').dataset.platform;
+
+            try {
+                // Try API call first, fall back to demo
+                const architecture = await generateArchitectureAPI(input, platform);
+
+                emptyState.style.display = 'none';
+                outputContent.style.display = 'flex';
+                outputContent.style.flexDirection = 'column';
+                outputContent.style.flex = '1';
+                outputContent.style.overflow = 'hidden';
+
+                renderOutput(architecture);
+                showToast(`Generated ${architecture.shots.length} shots — let's go! 🎬`, 'success');
+
+            } catch (error) {
+                console.log('API unavailable, using demo output:', error.message);
+
+                // Fall back to demo output
+                emptyState.style.display = 'none';
+                outputContent.style.display = 'flex';
+                outputContent.style.flexDirection = 'column';
+                outputContent.style.flex = '1';
+                outputContent.style.overflow = 'hidden';
+
+                renderDemoOutput();
+                showToast('Generated 4 shots — let\'s go! 🎬', 'success');
+            }
+
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 4v6h6"></path>
+                    <path d="M23 20v-6h-6"></path>
+                    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                </svg>
+                Regenerate
+            `;
+        });
+
+        // =====================================================================
+        // API FUNCTIONS
+        // =====================================================================
+
+        async function generateArchitectureAPI(creativeInput, platform = 'runway') {
+            const userPrompt = buildPrompt(creativeInput, platform);
+
+            // Try backend API first
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    system: REASONING_ENGINE_SYSTEM_PROMPT,
+                    prompt: userPrompt,
+                    max_tokens: 8000
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return parseArchitectureResponse(data.content || data.text || data);
+        }
+
+        function buildPrompt(input, platform) {
+            return `## Creative Input
+
+${input}
+
+## Requirements
+
+- Target platform: ${platform}
+- Number of shots: infer from content (typically 4-8 for a :15-:30 spot)
+- Output format: Complete JSON matching the schema
+
+## Instructions
+
+Analyze this creative input and produce a complete prompt architecture.
+
+For EACH shot, include:
+1. full_prompt: Complete image prompt with subject, environment, lighting, camera, style, quality markers
+2. motion_prompt: Complete motion/video prompt with movement description, physics, timing
+3. negative_prompt: What to avoid
+
+Make prompts HIGHLY SPECIFIC and TECHNICAL. Include:
+- Exact camera positions and angles
+- Specific lighting setups with color temperatures
+- Detailed motion physics and timing
+- Quality markers for the target platform
+
+Output valid JSON only.`;
+        }
+
+        function parseArchitectureResponse(responseText) {
+            let jsonStr = typeof responseText === 'string' ? responseText : JSON.stringify(responseText);
+
+            // Remove markdown code blocks if present
+            if (jsonStr.includes('```json')) {
+                jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+            } else if (jsonStr.includes('```')) {
+                jsonStr = jsonStr.replace(/```\n?/g, '');
+            }
+
+            const parsed = JSON.parse(jsonStr.trim());
+
+            // Normalize to our internal format
+            return {
+                title: parsed.project?.title || 'Untitled Project',
+                brand: parsed.project?.brand || null,
+                duration: parsed.project?.duration || ':15',
+                narrative: parsed.project?.narrative_summary || '',
+                emotional_arc: parsed.project?.emotional_arc || '',
+                tone: parsed.project?.tone || [],
+                confidence: parsed.metadata?.confidence_score || 0.8,
+                shots: parsed.shots.map(shot => ({
+                    number: shot.shot_number,
+                    name: shot.shot_id || `Shot ${shot.shot_number}`,
+                    duration: shot.duration_estimate || '2-3s',
+                    narrative_beat: shot.narrative_beat,
+                    image: shot.prompt?.full_prompt || shot.prompt,
+                    motion: shot.prompt?.motion_prompt || '',
+                    negative: shot.prompt?.negative_prompt || ''
+                })),
+                interpretations: parsed.interpretations || [],
+                missing_info: parsed.missing_info || []
+            };
+        }
+
+        function renderOutput(architecture) {
+            document.getElementById('project-title').textContent = architecture.title;
+            document.getElementById('summary-title').textContent = architecture.title;
+            document.getElementById('shot-count').textContent = `${architecture.shots.length} shots`;
+            document.getElementById('summary-meta').textContent = `${architecture.duration} • ${architecture.brand || 'Project'}`;
+            document.getElementById('summary-narrative').textContent = architecture.narrative;
+
+            const tagsContainer = document.getElementById('summary-tags');
+            tagsContainer.innerHTML = (architecture.tone || []).map(tag =>
+                `<span class="tone-tag">${tag}</span>`
+            ).join('');
+
+            projectData = { shots: architecture.shots };
+            renderShots();
+
+            // Show interpretations if any
+            if (architecture.interpretations && architecture.interpretations.length > 0) {
+                console.log('Interpretations made:', architecture.interpretations);
+            }
+        }
+
+        function renderDemoOutput() {
+            document.getElementById('project-title').textContent = 'Poland Spring — Infinite Slide';
+            document.getElementById('summary-title').textContent = 'Poland Spring — Infinite Slide';
+            document.getElementById('shot-count').textContent = '4 shots';
+            document.getElementById('summary-meta').textContent = ':15 • Digital/CTV • St. Paddy\'s Day 2026';
+            document.getElementById('summary-narrative').textContent = 'An empty pint glass slides across an Irish pub bartop with impossible purpose, weaving through St. Patrick\'s Day decorations until it finds its destination: a Poland Spring bottle. The glass has desire—it knows where it\'s going.';
+
+            const tagsContainer = document.getElementById('summary-tags');
+            tagsContainer.innerHTML = ['Whimsical', 'Absurdist', 'Warm'].map(tag =>
+                `<span class="tone-tag">${tag}</span>`
+            ).join('');
+
+            projectData = {
+                shots: [
+                    {
+                        number: 1,
+                        name: 'Establishing — The Pub Bartop',
+                        duration: '2-3s',
+                        image: `A traditional Irish pub bartop surface shot at exact bartop level, camera lens positioned inches above the dark polished wooden surface creating a dramatic low-angle perspective that emphasizes the rich wood grain texture and natural wear patterns. Sparse St. Patrick's Day decorations: two small paper shamrock cutouts laying flat, a single strand of green metallic beads near the right edge, one small green felt leprechaun hat positioned two feet from camera. Warm amber lighting from practical pub fixtures above and behind camera casting golden glow across wood with soft diffused highlights. Background dissolves into creamy warm bokeh showing abstract shapes of liquor bottles, brass tap handles, glowing ambient lights. Late evening post-celebration quietude atmosphere. Commercial photography, photorealistic, shallow depth of field, color temperature 3200K, 4K resolution. --no blue lighting, harsh shadows, bright daylight, excessive decorations, cluttered surface, modern minimalist bar, cartoon style`,
+                        motion: `Static locked-off camera with absolutely no movement—frame completely stable as if mounted on heavy tripod bolted to floor. Only motion is extremely subtle ambient life: warm pub lights in background exhibit barely perceptible flicker variation mimicking natural tungsten bulb inconsistency, shifting 2-3% intensity over shot duration. Occasional microscopic dust particles drift lazily through visible light beams, moving slowly downward and laterally affected by imperceptible air currents. Wood surface remains completely static with stable reflections. No objects on bartop move. Hold 2-3 seconds establishing atmosphere creating anticipation. --no camera shake, camera movement, objects moving, harsh lighting`
+                    },
+                    {
+                        number: 2,
+                        name: 'Glass Enters — Begins Sliding',
+                        duration: '3s',
+                        image: `Crystal clear empty pint glass in classic tulip shape sits perfectly upright at extreme left edge of frame on dark polished wooden Irish pub bartop, positioned as if just entered scene from off-screen. Glass immaculately clean with no fingerprints or residue, surfaces catching warm ambient light creating bright highlights along left edge and subtle caustic patterns on wood beneath. Camera at exact bartop surface level with lens nearly flush with wood grain, approximately six inches from surface. Single small green felt leprechaun hat on bartop eighteen inches to right of glass, directly in glass's implied forward path. Warm amber key lighting from camera-left and slightly above casts crisp highlight on glass left edge, soft diffused shadow extending right beneath glass base maintaining natural contact with wood. Two small shamrock cutouts visible in mid-ground. Background warm creamy bokeh. Commercial photography, photorealistic, shallow depth of field with glass razor-sharp, 4K detail. --no glass tipping, liquid in glass, blue lighting, harsh shadows`,
+                        motion: `Crystal clear pint glass slides continuously left to right across dark polished wooden bartop, maintaining PERFECTLY VERTICAL upright orientation throughout entire movement with absolutely no tipping, tilting, wobbling, leaning, or rotational movement—circular base remains completely flat and parallel to bartop surface every frame, as if carried by invisible perfectly level platform. Glass moves steady consistent pace approximately ten inches per second, gliding smoothly as if carried by frictionless invisible force, no visible pushing mechanism, no jerking, no stuttering, no bouncing, no speed variation during straight-line travel. As glass approaches small green leprechaun hat obstacle, executes anticipatory curved navigation—begins arcing gently leftward approximately six inches BEFORE reaching hat, not reacting to nearly hitting it but anticipating need to avoid, following smooth continuous curve approximate radius eight inches. Curve resembles skilled driver smoothly changing highway lanes: gradual, intentional, premeditated rather than sharp, sudden, reactive. Glass passes cleanly around front of hat with two inches clearance, then gradually arcs back rightward resuming original trajectory. Camera tracks horizontally at exact bartop surface level, moving rightward at precisely same velocity as glass, maintaining glass in left third of frame throughout with no vertical movement, no rotation, no shake, no bounce. Duration three seconds. --no glass tipping, tilting, wobbling, rolling, bouncing, hitting obstacles, pinball physics, sharp turns, static camera`
+                    },
+                    {
+                        number: 3,
+                        name: 'The Journey — Weaving Through',
+                        duration: '4s',
+                        image: `Dark polished wooden Irish pub bartop extending foreground to soft background depth, crystal clear empty upright pint glass positioned left third of frame. Camera at exact bartop surface level. Ahead of glass along implied rightward path: three distinct obstacles spaced apart with clear navigable paths between—small stack of three round cardboard beer coasters eight inches ahead, loose organic tangle of green metallic bead necklaces sixteen inches ahead, small decorative gold-painted pot two inches tall twenty-four inches ahead. Each obstacle sits clearly on bartop with visible space around allowing curved passage. Glass in sharp focus, obstacles medium focus, warm bokeh background showing abstract pub interior. Consistent warm amber lighting from camera-left creating highlights and gentle shadows beneath all objects. Sparse shamrock decorations in periphery. Commercial photography, photorealistic, shallow depth of field, 4K. --no cluttered obstacles, touching objects, blue tones, harsh lighting`,
+                        motion: `Crystal clear empty pint glass continues smooth continuous slide left to right across bartop, maintaining PERFECTLY VERTICAL upright orientation throughout with zero tipping, tilting, wobbling—glass base absolutely flat parallel to wood through every moment. Speed steady ten to twelve inches per second with no variation except during curves. Glass executes precise navigation sequence through three obstacles: FIRST approaching stacked beer coasters, begins curving LEFT approximately five inches before reaching obstacle, smooth arc radius approximately six inches, passing BEHIND coaster stack with two inches clearance, gradually straightening to rightward trajectory. SECOND approximately one second later approaching tangled green bead necklaces, curves RIGHT with similar anticipatory timing, arcing smoothly in front of bead tangle with comfortable clearance before straightening. THIRD approaching small decorative pot, executes subtle LEFT curve to pass cleanly. ALL curves ANTICIPATORY—glass begins each curve BEFORE reaching obstacle, like skilled driver seeing obstacles ahead smoothly adjusting trajectory in advance, never reactive like pinball bouncing after contact. All curves smooth continuous arcs, no sharp angles, no sudden direction changes, no jerky corrections. Glass moves with clear INTENTION. Camera tracks smoothly rightward at bartop level matching glass speed. Four seconds. --no tipping, wobbling, hitting obstacles, reactive movement, pinball physics, sharp turns, jerky motion, static camera`
+                    },
+                    {
+                        number: 4,
+                        name: 'Arrival — Meets Poland Spring',
+                        duration: '2-3s',
+                        image: `Dark polished wooden Irish pub bartop with Poland Spring water bottle (standard 16.9oz, recognizable label clearly visible) positioned right-center of frame standing upright. Crystal clear empty pint glass approaching from left side, approximately eight inches from bottle, still in motion. Camera at bartop surface level. Composition anticipates glass arriving beside bottle as companion objects. Warm amber pub lighting illuminates both with natural reflections—bottle catches subtle hero highlight slightly brighter than surroundings but organic to pub environment not artificial spotlight. Sparse St. Patrick's decorations (single shamrock, few gold confetti pieces) visible without cluttering product moment. Background warm soft bokeh pub interior. Both glass and bottle sharp focus as hero elements. Commercial product photography maintaining scene authenticity, photorealistic, warm color temperature, 4K. --no harsh product spotlight, blue tones, cluttered decorations, glass tipping`,
+                        motion: `Crystal clear empty pint glass slides from left toward Poland Spring bottle, maintaining PERFECTLY UPRIGHT vertical orientation throughout with absolutely no tipping, tilting, wobbling. As glass reaches approximately six inches from bottle, begins smooth gradual DECELERATION—speed reduction gentle continuous like car coming to rest at destination, not abrupt like emergency braking. Glass slows from approximately ten inches per second to approximately two inches per second over course of one second, deceleration curve smooth natural. Glass continues slower pace for final approach, comes to complete stop approximately two inches from bottle. Final stopping moment has NO wobble, NO micro-adjustments, NO rocking, NO settling oscillation—glass simply arrives and is still, reached exactly where intended. Emotional quality of deceleration feels like ARRIVAL rather than merely stopping—sense of satisfaction and completion. Glass and bottle now sit as companions, close but not touching, composition balanced and final. Camera tracking slows synchronized with glass deceleration, settling into final composed frame. Duration 2-3 seconds. --no glass continuing past bottle, hitting bottle, tipping, sudden stop, wobbling after stop, bouncing, bottle moving, harsh spotlight`
+                    }
+                ]
+            };
+
+            renderShots();
+        }
+
+        function renderShots() {
+            const shotsList = document.getElementById('shots-list');
+            shotsList.innerHTML = projectData.shots.map(shot => `
+                <div class="shot-card" data-shot="${shot.number}">
+                    <div class="shot-header" onclick="toggleShot(${shot.number})">
+                        <div class="shot-title-group">
+                            <span class="shot-number">${shot.number}</span>
+                            <span class="shot-name">${shot.name}</span>
+                            <span class="shot-duration">${shot.duration}</span>
+                        </div>
+                        <span class="shot-toggle">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="shot-content">
+                        <div class="prompt-section">
+                            <div class="prompt-label">
+                                <span class="prompt-label-text">Image Prompt</span>
+                                <div class="prompt-label-right">
+                                    <span class="char-count">0 / ${currentPlatformLimit}</span>
+                                    <span class="prompt-label-tag tag-image">First Frame</span>
+                                </div>
+                            </div>
+                            <div class="prompt-box" contenteditable="true" data-type="image" data-shot="${shot.number}" oninput="handlePromptEdit(this, ${shot.number}, 'image')">${shot.image}<button class="copy-btn" onclick="copyPrompt(this, event)">Copy</button></div>
+                        </div>
+                        <div class="prompt-section">
+                            <div class="prompt-label">
+                                <span class="prompt-label-text">Motion Prompt</span>
+                                <div class="prompt-label-right">
+                                    <span class="char-count">0 / ${currentPlatformLimit}</span>
+                                    <span class="prompt-label-tag tag-motion">Control Physics</span>
+                                </div>
+                            </div>
+                            <div class="prompt-box" contenteditable="true" data-type="motion" data-shot="${shot.number}" oninput="handlePromptEdit(this, ${shot.number}, 'motion')">${shot.motion}<button class="copy-btn" onclick="copyPrompt(this, event)">Copy</button></div>
+                        </div>
+                        <div class="feedback-section">
+                            <div class="feedback-label">Refine this shot</div>
+                            <div class="feedback-input-group">
+                                <input type="text" class="feedback-input" placeholder="e.g., 'Change pint glass to shot glass' or 'Make lighting warmer'" data-shot="${shot.number}" onkeypress="if(event.key==='Enter')refineShot(${shot.number})">
+                                <button class="btn btn-primary btn-refine" onclick="refineShot(${shot.number})">Refine</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update char counts after render
+            setTimeout(updateAllCharCounts, 0);
+        }
+
+        function handlePromptEdit(box, shotNum, type) {
+            // Update the projectData when user edits
+            const text = box.innerText.replace('Copy', '').replace('Copied!', '').trim();
+            const shot = projectData.shots.find(s => s.number === shotNum);
+            if (shot) {
+                shot[type] = text;
+            }
+            updateCharCount(box);
+        }
+
+        function toggleShot(num) {
+            const card = document.querySelector(`.shot-card[data-shot="${num}"]`);
+            card.classList.toggle('expanded');
+            // Update char counts when expanding
+            if (card.classList.contains('expanded')) {
+                card.querySelectorAll('.prompt-box').forEach(updateCharCount);
+            }
+        }
+
+        function copyPrompt(btn, e) {
+            e.stopPropagation();
+            const box = btn.parentElement;
+            const text = box.innerText.replace('Copy', '').replace('Copied!', '').trim();
+            navigator.clipboard.writeText(text);
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            showToast('Copied to clipboard!', 'success');
+            setTimeout(() => {
+                btn.textContent = 'Copy';
+                btn.classList.remove('copied');
+            }, 2000);
+        }
+
+        async function refineShot(shotNum) {
+            const input = document.querySelector(`.feedback-input[data-shot="${shotNum}"]`);
+            const feedback = input.value.trim();
+
+            if (!feedback) {
+                showToast('Tell me what to change!');
+                return;
+            }
+
+            const btn = input.closest('.feedback-input-group').querySelector('.btn-refine');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner"></div>';
+            btn.disabled = true;
+
+            const shot = projectData.shots.find(s => s.number === shotNum);
+
+            try {
+                // Try API refinement
+                const refined = await refineShotAPI(shot, feedback);
+                shot.image = refined.image;
+                shot.motion = refined.motion;
+            } catch (error) {
+                console.log('API unavailable, using local refinement:', error.message);
+
+                // Fall back to local string replacement
+                if (feedback.toLowerCase().includes('shot glass')) {
+                    shot.image = shot.image.replace(/pint glass/gi, 'shot glass').replace(/tulip shape/gi, 'classic shot glass shape');
+                    shot.motion = shot.motion.replace(/pint glass/gi, 'shot glass');
+                }
+                if (feedback.toLowerCase().includes('warmer')) {
+                    shot.image = shot.image.replace(/3200K/gi, '2800K').replace(/amber/gi, 'deep golden amber');
+                }
+                if (feedback.toLowerCase().includes('cooler') || feedback.toLowerCase().includes('colder')) {
+                    shot.image = shot.image.replace(/3200K/gi, '5600K').replace(/amber/gi, 'neutral white');
+                }
+                if (feedback.toLowerCase().includes('faster')) {
+                    shot.motion = shot.motion.replace(/ten inches per second/gi, 'eighteen inches per second').replace(/slow/gi, 'brisk');
+                }
+                if (feedback.toLowerCase().includes('slower')) {
+                    shot.motion = shot.motion.replace(/ten inches per second/gi, 'five inches per second').replace(/brisk/gi, 'slow');
+                }
+            }
+
+            // Re-render just this shot's prompts
+            const card = document.querySelector(`.shot-card[data-shot="${shotNum}"]`);
+            const imageBox = card.querySelector('[data-type="image"]');
+            const motionBox = card.querySelector('[data-type="motion"]');
+
+            imageBox.innerHTML = shot.image + '<button class="copy-btn" onclick="copyPrompt(this, event)">Copy</button>';
+            motionBox.innerHTML = shot.motion + '<button class="copy-btn" onclick="copyPrompt(this, event)">Copy</button>';
+
+            // Update char counts
+            updateCharCount(imageBox);
+            updateCharCount(motionBox);
+
+            showToast(`Shot ${shotNum} refined! ✨`, 'success');
+            input.value = '';
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+
+        async function refineShotAPI(shot, feedback) {
+            const refinementPrompt = `## Current Shot
+
+Shot ${shot.number}: ${shot.name}
+
+Image Prompt:
+${shot.image}
+
+Motion Prompt:
+${shot.motion}
+
+## Feedback
+
+${feedback}
+
+## Instructions
+
+Refine this shot based on the feedback. Maintain the overall style and technical approach while incorporating the requested changes.
+
+Output JSON with this structure:
+{
+  "image": "refined full image prompt",
+  "motion": "refined full motion prompt"
+}
+
+Output valid JSON only.`;
+
+            const response = await fetch(API_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    system: REASONING_ENGINE_SYSTEM_PROMPT,
+                    prompt: refinementPrompt,
+                    max_tokens: 4000
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            let jsonStr = data.content || data.text || data;
+
+            if (typeof jsonStr === 'string') {
+                jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            }
+
+            return JSON.parse(jsonStr);
+        }
+
+        // Expand all
+        document.getElementById('expand-all').addEventListener('click', function() {
+            const cards = document.querySelectorAll('.shot-card');
+            const allExpanded = Array.from(cards).every(c => c.classList.contains('expanded'));
+            cards.forEach(card => {
+                if (allExpanded) {
+                    card.classList.remove('expanded');
+                } else {
+                    card.classList.add('expanded');
+                    card.querySelectorAll('.prompt-box').forEach(updateCharCount);
+                }
+            });
+            this.textContent = allExpanded ? 'Expand All' : 'Collapse All';
+        });
+
+        // Share button
+        document.getElementById('share-btn').addEventListener('click', () => {
+            const url = window.location.href.split('?')[0] + '?project=demo-poland-spring';
+            navigator.clipboard.writeText(url);
+            showToast('Share link copied! 🔗', 'success');
+        });
+
+        // Export JSON
+        document.getElementById('export-btn').addEventListener('click', () => {
+            if (!projectData) {
+                showToast('Generate a project first!');
+                return;
+            }
+            const json = JSON.stringify(projectData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ai-artistry-project.json';
+            a.click();
+            showToast('JSON exported! 📦', 'success');
+        });
+    </script>
+</body>
+</html>

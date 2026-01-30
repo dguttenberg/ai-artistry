@@ -1,0 +1,13 @@
+{
+  "name": "ai-artistry",
+  "version": "1.0.0",
+  "description": "Creative-to-prompt translation for generative AI video",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site - no build needed'",
+    "start": "vercel dev"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}
