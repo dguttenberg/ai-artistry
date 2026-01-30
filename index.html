@@ -1798,6 +1798,12 @@ Output valid JSON only.`;
             a.click();
             showToast('JSON exported! 📦', 'success');
         });
+
+        // Expose functions to global scope for onclick handlers
+        window.toggleShot = toggleShot;
+        window.copyPrompt = copyPrompt;
+        window.refineShot = refineShot;
+        window.handlePromptEdit = handlePromptEdit;
     </script>
 </body>
 </html>
